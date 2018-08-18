@@ -10,8 +10,8 @@ import (
 	"reflect"
 	"strings"
 
-	"bytes"
 	"github.com/nulab/go-typetalk/typetalk/shared"
+	"bytes"
 	"mime/multipart"
 	"os"
 )
@@ -75,7 +75,7 @@ func (c *ClientCore) NewMultipartRequest(urlStr string, values map[string]io.Rea
 		if closable, ok := reader.(io.Closer); ok {
 			defer closable.Close()
 		}
-		if file, ok := reader.(*os.File); ok {
+		if  file, ok := reader.(*os.File); ok {
 			if fieldWriter, err = multipartWriter.CreateFormFile(key, file.Name()); err != nil {
 				return nil, err
 			}
@@ -84,7 +84,7 @@ func (c *ClientCore) NewMultipartRequest(urlStr string, values map[string]io.Rea
 				return nil, err
 			}
 		}
-		if _, err = io.Copy(fieldWriter, reader); err != nil {
+		if  _, err = io.Copy(fieldWriter, reader); err != nil {
 			return nil, err
 		}
 	}
