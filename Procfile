@@ -1,1 +1,1 @@
-web: ./bin/cw2tt
+web: cw2tt
