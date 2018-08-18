@@ -1,1 +1,1 @@
-web: cw2tt
+web: ./cw2tt
