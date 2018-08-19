@@ -1,4 +1,4 @@
-package cw2tt
+package main
 
 import (
 	"context"
@@ -92,7 +92,7 @@ func getDigest(token string, body []byte) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	mac := hmac.New(sha256.New, []byte(decodedToken))
+	mac := hmac.New(sha256.New, decodedToken)
 	mac.Write(body)
 	digest := base64.StdEncoding.EncodeToString(mac.Sum(nil))
 	return digest, nil
