@@ -16,7 +16,7 @@ import (
 
 func main() {
 	http.HandleFunc("/send", sendToTypetalk)
-	http.ListenAndServe(":30000", nil)
+	http.ListenAndServe(":"+os.Getenv("PORT"), nil)
 }
 
 type webhook struct {
