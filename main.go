@@ -34,6 +34,14 @@ type messageCreatedWebhook struct {
 	} `json:"webhook_event"`
 }
 
+func (hook *messageCreatedWebhook) hasZoomusURI() bool {
+	return strings.Contains(hook.WebhookEvent.Body, "zoom.us")
+}
+
+func (hook *messageCreatedWebhook) message() string {
+	return "From Chatwork:\n" + hook.WebhookEvent.Body
+}
+
 func sendToTypetalk(w http.ResponseWriter, r *http.Request) {
 	userAgent := r.UserAgent()
 	if !strings.Contains(userAgent, "ChatWork-Webhook") {
@@ -86,8 +94,13 @@ func sendToTypetalk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !data.hasZoomusURI() {
+		log.Printf("This post doesn't have zoom.us url.")
+		return
+	}
+
 	client := makeTypetalkBot()
-	_, _, err = client.Messages.PostMessage(context.Background(), topicId, data.WebhookEvent.Body, nil)
+	_, _, err = client.Messages.PostMessage(context.Background(), topicId, data.message(), nil)
 	if err != nil {
 		http.Error(w, "We could not post to Typetalk. You should check server.", http.StatusInternalServerError)
 		log.Print(err)
