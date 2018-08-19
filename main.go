@@ -1,4 +1,4 @@
-package cw2tt
+package main
 
 import (
 	"context"
