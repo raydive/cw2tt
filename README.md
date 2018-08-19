@@ -1,2 +1,2 @@
 # Send Chatwork' talk to Typetalk
-that's all!!
+This software is released under the MIT License.
