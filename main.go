@@ -35,7 +35,7 @@ type messageCreatedWebhook struct {
 }
 
 func (hook *messageCreatedWebhook) hasZoomusURI() bool {
-	return strings.Contains(hook.WebhookEvent.Body, "zoom.us")
+	return strings.Contains(hook.WebhookEvent.Body, os.Getenv("ZOOMUS_URL"))
 }
 
 func (hook *messageCreatedWebhook) message() string {
@@ -87,7 +87,7 @@ func sendToTypetalk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	topicId, err := strconv.Atoi(os.Getenv("TOPIC_ID"))
+	topicID, err := strconv.Atoi(os.Getenv("TOPIC_ID"))
 	if err != nil {
 		http.Error(w, "Invalid topic id. You should check server's environment variables.", http.StatusInternalServerError)
 		log.Print(err)
@@ -100,7 +100,7 @@ func sendToTypetalk(w http.ResponseWriter, r *http.Request) {
 	}
 
 	client := makeTypetalkBot()
-	_, _, err = client.Messages.PostMessage(context.Background(), topicId, data.message(), nil)
+	_, _, err = client.Messages.PostMessage(context.Background(), topicID, data.message(), nil)
 	if err != nil {
 		http.Error(w, "We could not post to Typetalk. You should check server.", http.StatusInternalServerError)
 		log.Print(err)
