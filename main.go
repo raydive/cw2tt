@@ -39,7 +39,7 @@ func (hook *messageCreatedWebhook) hasZoomusURI() bool {
 }
 
 func (hook *messageCreatedWebhook) message() string {
-	return "From Chatwork:\n" + strings.Replace(hook.WebhookEvent.Body, "[toall]", "@all", 1)
+	return "From Chatwork:\n" + strings.Replace(hook.WebhookEvent.Body, "[toall]", "@here", 1)
 }
 
 func sendToTypetalk(w http.ResponseWriter, r *http.Request) {
