@@ -2,44 +2,22 @@ package main
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
-	"github.com/nulab/go-typetalk/typetalk/v1"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/raydive/cw2tt/chatwork"
+	"github.com/raydive/cw2tt/typetalk"
 )
 
 func main() {
 	http.HandleFunc("/send", sendToTypetalk)
+	http.HandleFunc("/account", accountHandler)
 	http.ListenAndServe(":"+os.Getenv("PORT"), nil)
-}
-
-type messageCreatedWebhook struct {
-	WebhookSettingID string `json:"webhook_setting_id"`
-	WebhookEventType string `json:"webhook_event_type"`
-	WebhookEventTime int    `json:"webhook_event_time"`
-	WebhookEvent     struct {
-		MessageID  string `json:"message_id"`
-		RoomID     int    `json:"room_id"`
-		AccountID  int    `json:"account_id"`
-		Body       string `json:"body"`
-		SendTime   int    `json:"send_time"`
-		UpdateTime int    `json:"update_time"`
-	} `json:"webhook_event"`
-}
-
-func (hook *messageCreatedWebhook) hasZoomusURI() bool {
-	return strings.Contains(hook.WebhookEvent.Body, os.Getenv("ZOOMUS_URL"))
-}
-
-func (hook *messageCreatedWebhook) message() string {
-	return "From Chatwork:\n" + strings.Replace(hook.WebhookEvent.Body, "[toall]", "@here", 1)
 }
 
 func sendToTypetalk(w http.ResponseWriter, r *http.Request) {
@@ -65,7 +43,7 @@ func sendToTypetalk(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token := os.Getenv("WEBHOOK_TOKEN")
-	digest, err := getDigest(token, body)
+	digest, err := chatwork.GetDigest(token, body)
 	if err != nil {
 		http.Error(w, "Webhook token is missing. You should check server's environment variables.", http.StatusInternalServerError)
 		log.Print(err)
@@ -79,7 +57,7 @@ func sendToTypetalk(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Take JSON data
-	data := messageCreatedWebhook{}
+	data := chatwork.MessageCreatedWebhook{}
 	err = json.Unmarshal(body, &data)
 	if err != nil {
 		http.Error(w, "Request's body is not excepted JSON.", http.StatusBadRequest)
@@ -94,13 +72,14 @@ func sendToTypetalk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !data.hasZoomusURI() {
+	if !data.HasZoomusURI() {
 		log.Printf("This post doesn't have zoom.us url.")
 		return
 	}
 
-	client := makeTypetalkBot()
-	_, _, err = client.Messages.PostMessage(context.Background(), topicID, data.message(), nil)
+	typetalkToken := os.Getenv("TYPETALK_TOKEN")
+	ttClient := typetalk.MakeTypetalkBot(typetalkToken)
+	_, _, err = ttClient.Messages.PostMessage(context.Background(), topicID, data.Message(), nil)
 	if err != nil {
 		http.Error(w, "We could not post to Typetalk. You should check server.", http.StatusInternalServerError)
 		log.Print(err)
@@ -108,20 +87,17 @@ func sendToTypetalk(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getDigest(token string, body []byte) (string, error) {
-	decodedToken, err := base64.StdEncoding.DecodeString(token)
+func accountHandler(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return "", err
+		http.Error(w, "Invalid body from Typetalk.", http.StatusBadRequest)
+		log.Print(err)
+		return
 	}
-	mac := hmac.New(sha256.New, decodedToken)
-	mac.Write(body)
-	digest := base64.StdEncoding.EncodeToString(mac.Sum(nil))
-	return digest, nil
-}
 
-func makeTypetalkBot() *v1.Client {
-	token := os.Getenv("TYPETALK_TOKEN")
-	client := v1.NewClient(nil)
-	client.SetTypetalkToken(token)
-	return client
+	if r.Method == http.MethodGet {
+
+	} else if r.Method == http.MethodPost {
+		// TODO must be adding or deleting account name on DB
+	}
 }
